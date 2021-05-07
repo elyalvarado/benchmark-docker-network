@@ -1,0 +1,31 @@
+version: '3.7'
+
+x-app_image: &app_image
+  build:
+    context: .
+    dockerfile: Dockerfile
+  image: elyalvarado/nuttcp:latest
+  networks:
+    - nuttcp
+
+services:
+  server:
+    <<: *app_image
+    ports:
+      - 5000-5004:5000-5004
+      - 5000-5004:5000-5004/udp
+  client:
+    <<: *app_image
+    depends_on:
+      - server
+    command: >
+      bash -c "echo 'Benchmarking Internal Network'
+      && echo '*****************************'
+      && nuttcp -v -v -i1 -p 5001 server
+      && echo && echo && echo
+      && echo 'Benchmarking Host Network'
+      && echo '*************************'
+      && nuttcp -v -v -i1 -p 5001 host.docker.internal"
+
+networks:
+  nuttcp:
